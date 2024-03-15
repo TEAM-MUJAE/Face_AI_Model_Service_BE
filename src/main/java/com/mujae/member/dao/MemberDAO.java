@@ -19,10 +19,6 @@ public interface MemberDAO {
 
 	int updatePasswd(MemberDTO mdto); //비밀번호 수정
 
-	int memberTot(); //회원 수
-
-	List<MemberDTO> getMembers(MemberDTO mdto);  //전체 회원정보 불러오기
-
 	int memUpProc(MemberDTO mdto); //회원정보 수정
 
 	int memDelete(MemberDTO mdto); //탈퇴하기

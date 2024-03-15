@@ -14,15 +14,17 @@ public class MemberDTO {
 	private String pwd;
 	private String name;
 	private String email;
+	private String phone;
 
 	public MemberDTO() {
 	}
 
-	public MemberDTO(String id, String pwd, String name, String email, int user_code) {
+	public MemberDTO(String id, String pwd, String name, String email, String phone,int user_code) {
 		this.id = id;
 		this.pwd = pwd;
 		this.name = name;
 		this.email = email;
+		this.phone = phone;
 		this.user_code = user_code;
 
 
@@ -60,6 +62,15 @@ public class MemberDTO {
 		this.email = email;
 	}
 
+	public String getPhone() {
+		return phone;
+	}
+
+	public void setPhone(String email) {
+		this.phone = phone;
+	}
+
+
 	public int getUser_code() {
 		return user_code;
 	}
@@ -75,6 +86,7 @@ public class MemberDTO {
 				", pwd='" + pwd + '\'' +
 				", name='" + name + '\'' +
 				", email='" + email + '\'' +
+				", phone='" + phone + '\'' +
 				", user_code='" + user_code + '\'' +
 				'}';
 	}
