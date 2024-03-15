@@ -41,7 +41,7 @@
 		    PWD  = #{pwd}
 			,EMAIL = #{email}
 			,PHONE = #{phone}
-		WHERE ID  #{id}
+		WHERE ID =  #{id}
 	</update>
 	<!--탈퇴하기-->
 	<delete id="memDelete"  parameterType="mdto">

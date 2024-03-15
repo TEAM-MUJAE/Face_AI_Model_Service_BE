@@ -14,5 +14,9 @@
          <typeAlias alias="map" type="java.util.Map" />
          <typeAlias alias="mdto" type="com.mujae.member.dto.MemberDTO" />
 
-     </typeAliases>	
+     </typeAliases>
+	<mappers>
+	<mapper resource="com.mujae.member.mapper.MemberMapper"/>
+	</mappers>
+
 </configuration>

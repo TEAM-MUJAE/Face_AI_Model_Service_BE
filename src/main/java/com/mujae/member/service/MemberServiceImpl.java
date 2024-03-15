@@ -45,13 +45,6 @@ public class MemberServiceImpl implements MemberService {
 	}
 
 	@Override
-	public List<MemberDTO> getMembers(MemberDTO mdto) {
-
-		return memberDao.getMembers(mdto);
-
-	}
-
-	@Override
 	public int memUpProc(MemberDTO mdto) {
 		return memberDao.memUpProc(mdto);
 	}
