@@ -1,17 +1,21 @@
 package com.mujae.member.controller;
 
 import com.mujae.member.dto.MemberDTO;
+import com.mujae.member.service.MemberService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import com.mujae.member.service.MemberService;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class MemberController {
@@ -20,48 +24,43 @@ public class MemberController {
 	@Autowired
 	MemberService memberService;
 
-	@RequestMapping("loginProc")
-	public String loginProc(HttpServletRequest request, HttpServletResponse response, MemberDTO mdto, Model model) {
-		// 세션 정보(ssKey) - 회원정보
+	@PostMapping("/login")
+	public ResponseEntity<?> login(HttpServletRequest request, @RequestBody MemberDTO mdto) {
 		HttpSession session = request.getSession();
-		MemberDTO sdto = memberService.getMember(mdto);
-		String url = "/";
-		String msg;
+
+		System.out.println("request"+request);
+
+		System.out.println("mdto"+mdto);
+
+//		MemberDTO sdto = memberService.getMemberList(); // Assuming this returns the logged-in user's details
+		MemberDTO sdto = memberService.getMember(mdto); // Assuming this returns the logged-in user's details
+
+
 
 		if (sdto != null) {
-
+			// Successful login
 			MemberDTO ssKey = new MemberDTO();
 			ssKey.setId(sdto.getId());
 			ssKey.setPwd(sdto.getPwd());
 			ssKey.setName(sdto.getName());
 			ssKey.setUser_code(sdto.getUser_code());
-			msg = sdto.getName() + "님 반갑습니다";
 
 			session.setAttribute("ssKey", ssKey);
-		} else
-			msg = "아이디 또는 패스워드 맞지 않습니다";
 
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
+			// Creating a response object to return
+			Map<String, Object> response = new HashMap<>();
+			response.put("message", sdto.getName() + "님 반갑습니다");
+			response.put("user", ssKey); // Optionally include user details
 
-		return "MsgPage";
+			return new ResponseEntity<>(response, HttpStatus.OK);
+		} else {
+			// Login failed
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body(Collections.singletonMap("message", "아이디 또는 패스워드 맞지 않습니다"));
+		}
 	}
 
-	@RequestMapping("/logoutProc")
-	public String logoutProc(HttpServletRequest request, HttpServletResponse response, MemberDTO mdto, Model model) {
-		// 세션정보 (ssKey) - 회원정보
-		HttpSession session = request.getSession();
-		session.invalidate();
-		return "redirect:/";
-
-	}
-
-	@RequestMapping("login")
-	public String login(HttpServletRequest request, HttpServletResponse response, MemberDTO mdto, Model model) {
-
-		return "Login";
-
-	}
 	@RequestMapping("/register")
 	public String registerProc(HttpServletRequest request, HttpServletResponse response,
 							   Model model, MemberDTO mdto) {

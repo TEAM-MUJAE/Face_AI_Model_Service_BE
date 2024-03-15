@@ -1,10 +1,10 @@
 package com.mujae.member.service;
 
-import java.util.List;
-
 import com.mujae.member.dto.MemberDTO;
 
+
 public interface MemberService {
+
 	int idCheck(String id); //아이디 체크
 
 	int memberJoin(MemberDTO mdto) throws Exception; //회원가입
@@ -19,4 +19,5 @@ public interface MemberService {
 
 	int memDelete(MemberDTO mdto); //탈퇴
 
+    MemberDTO getMemberList();
 }

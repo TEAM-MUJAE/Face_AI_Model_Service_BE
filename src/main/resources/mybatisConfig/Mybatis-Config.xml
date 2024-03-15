@@ -16,7 +16,7 @@
 
      </typeAliases>
 	<mappers>
-	<mapper resource="com.mujae.member.mapper.MemberMapper"/>
+		<mapper resource="mapper/MemberMapper.xml"/>
 	</mappers>
 
 </configuration>
