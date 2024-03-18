@@ -19,7 +19,7 @@ public class MemberDTO {
 	public MemberDTO() {
 	}
 
-	public MemberDTO(String id, String pwd, String name, String email, String phone,int user_code) {
+	public MemberDTO(String id, String pwd, String name, String email, String phone, int user_code) {
 		this.id = id;
 		this.pwd = pwd;
 		this.name = name;
@@ -66,7 +66,7 @@ public class MemberDTO {
 		return phone;
 	}
 
-	public void setPhone(String email) {
+	public void setPhone(String phone) {
 		this.phone = phone;
 	}
 

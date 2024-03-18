@@ -24,7 +24,7 @@ public class MemberController {
 	@Autowired
 	MemberService memberService;
 
-	@PostMapping("/login")
+	@PostMapping("/login") //로그인
 	public ResponseEntity<?> login(HttpServletRequest request, @RequestBody MemberDTO mdto) {
 		HttpSession session = request.getSession();
 
@@ -61,187 +61,111 @@ public class MemberController {
 		}
 	}
 
-	@RequestMapping("/register")
-	public String registerProc(HttpServletRequest request, HttpServletResponse response,
-							   Model model, MemberDTO mdto) {
+	@PostMapping("/register") //회원가입
+	public ResponseEntity<?> register(HttpServletRequest request, HttpServletResponse response,
+							   Model model, @RequestBody MemberDTO mdto) {
+
+		System.out.println("불러오니"+mdto);
+
+
 		try {
-			int r= memberService.memberJoin(mdto);
+			int affectedRows = memberService.memberJoin(mdto);
+
+			System.out.println("------"+affectedRows);
+
+			if (affectedRows > 0) {
+				// 회원가입 성공
+				return ResponseEntity
+						.status(HttpStatus.CREATED)
+						.body(Collections.singletonMap("message", mdto.getName() + "님의 회원가입을 축하합니다"));
+			} else {
+				// 회원가입 실패 (중복된 사용자명 또는 이메일)
+				return ResponseEntity
+						.status(HttpStatus.BAD_REQUEST)
+						.body(Collections.singletonMap("message", "회원가입에 실패했습니다"));
+			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// 예외 처리
+			return ResponseEntity
+					.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Collections.singletonMap("message", "서버 오류로 인한 회원가입 실패"));
 		}
-
-		return "redirect:/";
 	}
 
-	@RequestMapping("memSearchProc")
-	public String memSearchProc(HttpServletRequest request, HttpServletResponse response, MemberDTO mdto, Model model) {
-		// 회원이 맞으면 비밀번호 새로 설정 페이지
-		// 회원정보가 맞지 않으면 회원가입
-
-		return "Login";
-
-	}
-
-	@RequestMapping("/info")
-	public String info(HttpServletRequest request, HttpServletResponse response, Model model) {
-		// info
-		// 세션 키에 데이터를 갖고 있고 그 데이터를 불러와서 해당되는 고객의
-		// 정보를 가져오고s
+	@GetMapping("/info") // 회원정보 불러오기
+	public ResponseEntity<?> info(HttpServletRequest request, HttpServletResponse response, Model model) {
+		// 세션 키에 데이터를 갖고 있고 그 데이터를 불러와서 해당되는 고객의 정보를 가져오고
 		HttpSession session = request.getSession();
 		MemberDTO custom = (MemberDTO) session.getAttribute("ssKey");
-		// 데이터베이스에서 해당되는 mdto에 있는 정보를 가지고 해당 고객 정보 가져오기
-		String url = null;
-		String msg = null;
-		String page = null;
+
 		if (custom != null) {
-			// 저장해서 화면에서 가져올 수 있도록 한다
-			// 회원정보를 갖고 있는 페이지(jsp를 따로 만들기(MemberInfo))
+			// 세션에 로그인한 사용자 정보가 저장되어 있음
+			// 해당 사용자의 정보를 데이터베이스에서 가져와서 화면에 표시
 			MemberDTO mdto = memberService.getMember(custom);
 			model.addAttribute("mdto", mdto);
-			model.addAttribute("contentsJsp", "Info");
-			page = "Main";
+			return ResponseEntity.ok(mdto); // 회원 정보를 JSON 형태로 응답
 		} else {
-			msg = "로그인 먼저 필요합니다";
-			url = "/login";
-			model.addAttribute("msg", msg);
-			model.addAttribute("url", url);
-			page = "MsgPage";
-			session.setAttribute("ssKey", custom);
+			// 로그인하지 않은 경우
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body(Collections.singletonMap("message", "로그인이 필요합니다"));
 		}
-		return page;
-
 	}
 
-	@RequestMapping("searchProc")
-	public String searchProc(HttpServletRequest request, HttpServletResponse response, MemberDTO mdto, Model model) {
-		int r = 0;
-		String id = null;
-		String msg = null;
-		String url = "/";
-
-		if (mdto != null) {
-			if (mdto.getId() != null) { // 비밀번호 설정
-				r = memberService.updatePasswd(mdto);
-				msg = "비밀번호가 변경되었습니다";
-			} else { // 아이디 찾아서 리턴
-				id = memberService.searchId(mdto);
-				if (id != null)
-					msg = "회원아이디 : " + id;
-				else
-					msg = "회원정보가 없습니다";
-				url = "memSearch";
-
-			}
-		}
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
-		return "MsgPage";
-
-	}
-
-	@RequestMapping("/pwCheck")
-	public String pwCheck(HttpServletRequest request, Model model) {
-		return "PwCheck";
-
-	}
-	@RequestMapping("/memUpForm")
-	public String memUpForm(HttpServletRequest request, HttpServletResponse response, Model model) {
-		// session정보 갖고오기
+	@PostMapping("/memUpProc") //회원정보 수정
+	public ResponseEntity<?> memUpProc(HttpServletRequest request, HttpServletResponse response, @RequestBody MemberDTO mdto) {
 		HttpSession session = request.getSession();
 		MemberDTO custom = (MemberDTO) session.getAttribute("ssKey");
-		// 세션정보를 기준으로 회원 정보 가져오기
-		String page = null;
-		String msg = null;
-		String url = null;
-		if(custom!=null) {
-			MemberDTO mdto = memberService.getMember(custom);
-			model.addAttribute("mdto", mdto);
-			model.addAttribute("contentsJsp", "Update");
-			page = "Main";
-		}else {
-			msg = "로그인 먼저 필요합니다.";
-			url = "/login";
-			model.addAttribute("msg", msg);
-			model.addAttribute("url", url);
-			page = "MsgPage";
+		if (custom != null) {
+			// 로그인한 사용자가 있는지 확인
+			mdto.setId(custom.getId()); // ID 설정
+			int affectedRows = memberService.memUpProc(mdto);
+
+			if (affectedRows > 0) {
+				// 회원 정보 수정 성공
+				return ResponseEntity
+						.status(HttpStatus.OK)
+						.body(Collections.singletonMap("message", "회원 정보가 성공적으로 수정되었습니다"));
+			} else {
+				// 회원 정보 수정 실패
+				return ResponseEntity
+						.status(HttpStatus.INTERNAL_SERVER_ERROR)
+						.body(Collections.singletonMap("message", "회원 정보 수정에 실패했습니다"));
+			}
+		} else {
+			// 로그인하지 않은 사용자인 경우
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body(Collections.singletonMap("message", "로그인이 필요합니다"));
 		}
-		session.setAttribute("ssKey", custom);
-		return page;
 	}
 
-	@RequestMapping("/memUpProc")
-	public String memUpProc(HttpServletRequest request, HttpServletResponse response,
-							Model model,
-							MemberDTO mdto) {
-		// session정보 갖고오기
+	@PostMapping("/memDelete") //탈퇴하기
+	public ResponseEntity<?> memDelete(HttpServletRequest request, HttpServletResponse response, Model model) {
+		// 세션 정보 가져오기
 		HttpSession session = request.getSession();
 		MemberDTO custom = (MemberDTO) session.getAttribute("ssKey");
-		// 세션정보를 기준으로 회원 정보 가져오기
-		String page = null;
-		String msg = null;
-		String url = null;
-		if(custom!=null) {
-			int r = memberService.memUpProc(mdto);
-			if(r>0) {
-				msg="회원정보가 수정되었습니다.";
-				session.invalidate();
+
+		if (custom != null) {
+			int affectedRows = memberService.memDelete(custom);
+			if (affectedRows > 0) {
+				// 회원 탈퇴 성공
+				session.invalidate(); // 세션 무효화
+				return ResponseEntity
+						.status(HttpStatus.OK)
+						.body(Collections.singletonMap("message", "회원이 탈퇴 처리되었습니다"));
+			} else {
+				// 회원 탈퇴 실패
+				return ResponseEntity
+						.status(HttpStatus.INTERNAL_SERVER_ERROR)
+						.body(Collections.singletonMap("message", "탈퇴할 수 없습니다. 관리자에게 문의하세요"));
 			}
-			else {
-				msg ="수정되지 않았습니다. \\n 관리자에게 문의바랍니다.";
-			}
-			url = "/";
-		}else {
-			msg = "로그인 먼저 필요합니다.";
-			url = "/login";
+		} else {
+			// 로그인되지 않은 상태
+			return ResponseEntity
+					.status(HttpStatus.UNAUTHORIZED)
+					.body(Collections.singletonMap("message", "로그인이 필요합니다"));
 		}
-		page = "MsgPage";
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
-		return page;
+
 	}
-
-	@RequestMapping("/memdelete")
-	public String memdelete(HttpServletRequest request, HttpServletResponse response,
-							Model model,
-							MemberDTO mdto) {
-		// session정보 갖고오기
-		HttpSession session = request.getSession();
-		MemberDTO custom = (MemberDTO) session.getAttribute("ssKey");
-		// 세션정보를 기준으로 회원 정보 가져오기
-		String page = null;
-		String msg = null;
-		String url = null;
-		if(custom!=null) {
-			int r = memberService.memDelete(custom);
-			if(r>0) {
-				msg="회원이 탈퇴 처리 되었습니다";
-				session.invalidate();
-			}
-			else {
-				msg ="탈퇴할 수 없습니다. \\n 관리자에게 문의바랍니다.";
-			}
-			url = "/";
-		}else {
-			msg = "로그인 먼저 필요합니다.";
-			url = "/login";
-		}
-		page = "MsgPage";
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
-		return page;
-	}
-
-	@RequestMapping("/idCheck")
-	@ResponseBody
-	public int idCheck(HttpServletRequest request, HttpServletResponse response,
-					   Model model, MemberDTO mdto) {
-		int cnt = 0;
-		if(mdto.getId()!=null) {
-			cnt =memberService.idCheck(mdto.getId());
-		}
-		return cnt;
-	}
-
-
 }

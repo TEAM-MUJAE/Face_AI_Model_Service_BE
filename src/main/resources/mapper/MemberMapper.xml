@@ -10,52 +10,53 @@
 		<result property="pwd" column="PWD"/>
 		<result property="name" column="NAME"/>
 		<result property="email" column="EMAIL"/>
-<!--		<result property="phone" column="PHONE"/>-->
+		<result property="phone" column="PHONE"/>
 	</resultMap>
 
+	<!--회원가입-->
+	<insert id="memberJoin" parameterType="com.mujae.member.dto.MemberDTO">
+		INSERT INTO user_info
+		    (ID, PWD, NAME, EMAIL, PHONE)
+		VALUES
+		    (#{id},#{pwd},#{name},#{email},#{phone})
+	</insert>
 
-<!--	<select id="idCheck" resultType="int">-->
-<!--		select count(id) from user_info-->
-<!--		where id = #{id}-->
-<!--	</select>-->
-<!--	&lt;!&ndash;회원가입&ndash;&gt;-->
-<!--	<insert id="memberJoin" parameterType="mdto">-->
-<!--		INSERT INTO user_info-->
-<!--		    (ID, PWD, NAME, EMAIL, PHONE)-->
-<!--		VALUES-->
-<!--		    (#{id},#{pwd},#{name},#{email},#{phone})-->
-<!--	</insert>-->
-<!--	&lt;!&ndash;화원정보 가져오기&ndash;&gt;-->
-<!--	<select id="getMember" parameterType="com.mujae.member.dto.MemberDTO" resultMap="MemberResultMap">-->
-<!--		SELECT * FROM user_info-->
-<!--	</select>-->
-<!--&lt;!&ndash;	&lt;!&ndash;아이디찾기&ndash;&gt;&ndash;&gt;-->
-<!--	<select id="searchId" parameterType="mdto" resultType="string">-->
-<!--		SELECT ID FROM user_info-->
-<!--		WHERE NAME= #{name} AND EMAIL=#{email}-->
-<!--	</select>-->
-<!--	&lt;!&ndash;비밀번호 수정&ndash;&gt;-->
-<!--	<update id="updatePasswd" parameterType="mdto">-->
-<!--		UPDATE user_info-->
-<!--		SET PWD = #{pwd}-->
-<!--		WHERE ID = #{id}-->
+<!--	 이메일로 사용자 찾기 <중복>-->
+	<select id="findByEmail" resultMap="MemberResultMap">
+		SELECT *
+		FROM user_info
+		WHERE email = #{email}
+	</select>
 
-<!--	</update>-->
-<!--	&lt;!&ndash;회원정보 수정&ndash;&gt;-->
-<!--	<update id="memUpProc" parameterType="mdto">-->
-<!--		UPDATE user_info-->
-<!--		SET-->
-<!--		    PWD  = #{pwd}-->
-<!--			,EMAIL = #{email}-->
-<!--			,PHONE = #{phone}-->
-<!--		WHERE ID =  #{id}-->
-<!--	</update>-->
-<!--	&lt;!&ndash;탈퇴하기&ndash;&gt;-->
-<!--	<delete id="memDelete"  parameterType="mdto">-->
-<!--		DELETE-->
-<!--		FROM user_info-->
-<!--		WHERE ID = #{id}-->
-<!--	</delete>-->
+<!--	&lt;!&ndash;	 이메일로 사용자 찾기 <중복>&ndash;&gt;-->
+	<select id="findByPhone" resultMap="MemberResultMap">
+		SELECT *
+		FROM user_info
+		WHERE PHONE = #{phone}
+	</select>
+
+<!--&lt;!&ndash;	사용자 아이디로 사용자 찾기 <중복>&ndash;&gt;-->
+	<select id="findByUserId" resultMap="MemberResultMap">
+		SELECT *
+		FROM user_info
+		WHERE ID = #{id}
+	</select>
+
+	<!--회원정보 수정-->
+	<update id="memUpProc" parameterType="com.mujae.member.dto.MemberDTO">
+		UPDATE user_info
+		SET
+		    PWD  = #{pwd}
+			,EMAIL = #{email}
+			,PHONE = #{phone}
+		WHERE ID =  #{id}
+	</update>
+	<!--탈퇴하기-->
+	<delete id="memDelete"  parameterType="com.mujae.member.dto.MemberDTO">
+		DELETE
+		FROM user_info
+		WHERE ID = #{id}
+	</delete>
 
 	<select id="selectUser" resultMap="MemberResultMap">
 		SELECT * FROM user_info
