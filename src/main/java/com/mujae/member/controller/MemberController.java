@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -61,31 +62,34 @@ public class MemberController {
 		}
 	}
 
-	@PostMapping("/register") //회원가입
-	public ResponseEntity<?> register(HttpServletRequest request, HttpServletResponse response,
-							   Model model, @RequestBody MemberDTO mdto) {
-
-		System.out.println("불러오니"+mdto);
-
-
+	@PostMapping("/register")
+	public ResponseEntity<?> register(@RequestBody MemberDTO mdto) {
 		try {
-			int affectedRows = memberService.memberJoin(mdto);
+			int result = memberService.memberJoin(mdto);
 
-			System.out.println("------"+affectedRows);
-
-			if (affectedRows > 0) {
-				// 회원가입 성공
-				return ResponseEntity
-						.status(HttpStatus.CREATED)
-						.body(Collections.singletonMap("message", mdto.getName() + "님의 회원가입을 축하합니다"));
-			} else {
-				// 회원가입 실패 (중복된 사용자명 또는 이메일)
+			if (result == -1) {
 				return ResponseEntity
 						.status(HttpStatus.BAD_REQUEST)
-						.body(Collections.singletonMap("message", "회원가입에 실패했습니다"));
+						.body(Collections.singletonMap("message", "이미 존재하는 이메일입니다."));
+			} else if (result == -2) {
+				return ResponseEntity
+						.status(HttpStatus.BAD_REQUEST)
+						.body(Collections.singletonMap("message", "이미 존재하는 아이디입니다."));
+			} else if (result == -3) {
+				return ResponseEntity
+						.status(HttpStatus.BAD_REQUEST)
+						.body(Collections.singletonMap("message", "이미 존재하는 전화번호입니다."));
+			} else if (result > 0) {
+				return ResponseEntity
+						.status(HttpStatus.CREATED)
+						.body(Collections.singletonMap("message", mdto.getName() + "님, 회원가입을 축하합니다."));
+			} else {
+				return ResponseEntity
+						.status(HttpStatus.INTERNAL_SERVER_ERROR)
+						.body(Collections.singletonMap("message", "회원가입 과정에서 오류가 발생했습니다."));
 			}
 		} catch (Exception e) {
-			// 예외 처리
+			// 모든 예외를 여기서 잡아냄
 			return ResponseEntity
 					.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(Collections.singletonMap("message", "서버 오류로 인한 회원가입 실패"));
@@ -112,28 +116,44 @@ public class MemberController {
 		}
 	}
 
-	@PostMapping("/memUpProc") //회원정보 수정
-	public ResponseEntity<?> memUpProc(HttpServletRequest request, HttpServletResponse response, @RequestBody MemberDTO mdto) {
+	@PostMapping("/memUpProc")
+	public ResponseEntity<?> memUpProc(@RequestBody MemberDTO mdto, HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		MemberDTO custom = (MemberDTO) session.getAttribute("ssKey");
-		if (custom != null) {
-			// 로그인한 사용자가 있는지 확인
-			mdto.setId(custom.getId()); // ID 설정
-			int affectedRows = memberService.memUpProc(mdto);
 
-			if (affectedRows > 0) {
-				// 회원 정보 수정 성공
-				return ResponseEntity
-						.status(HttpStatus.OK)
-						.body(Collections.singletonMap("message", "회원 정보가 성공적으로 수정되었습니다"));
-			} else {
-				// 회원 정보 수정 실패
+		if (custom != null) {
+			mdto.setId(custom.getId()); // ID 설정
+			try {
+				int affectedRows = memberService.memUpProc(mdto);
+
+				// 중복 체크는 서비스 레이어에서 음수 값을 통해 관리
+				if (affectedRows == -1) {
+					return ResponseEntity
+							.status(HttpStatus.BAD_REQUEST)
+							.body(Collections.singletonMap("message", "중복된 이메일입니다."));
+				} else if (affectedRows == -2) {
+					return ResponseEntity
+							.status(HttpStatus.BAD_REQUEST)
+							.body(Collections.singletonMap("message", "중복된 아이디입니다."));
+				} else if (affectedRows == -3) {
+					return ResponseEntity
+							.status(HttpStatus.BAD_REQUEST)
+							.body(Collections.singletonMap("message", "중복된 전화번호입니다."));
+				} else if (affectedRows > 0) {
+					return ResponseEntity
+							.status(HttpStatus.OK)
+							.body(Collections.singletonMap("message", "회원 정보가 성공적으로 수정되었습니다"));
+				} else {
+					return ResponseEntity
+							.status(HttpStatus.INTERNAL_SERVER_ERROR)
+							.body(Collections.singletonMap("message", "회원 정보 수정에 실패했습니다"));
+				}
+			} catch (Exception e) {
 				return ResponseEntity
 						.status(HttpStatus.INTERNAL_SERVER_ERROR)
-						.body(Collections.singletonMap("message", "회원 정보 수정에 실패했습니다"));
+						.body(Collections.singletonMap("message", "회원 정보 수정 중 오류가 발생했습니다"));
 			}
 		} else {
-			// 로그인하지 않은 사용자인 경우
 			return ResponseEntity
 					.status(HttpStatus.UNAUTHORIZED)
 					.body(Collections.singletonMap("message", "로그인이 필요합니다"));
