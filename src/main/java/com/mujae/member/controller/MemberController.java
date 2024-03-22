@@ -13,10 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 public class MemberController {
@@ -65,28 +62,30 @@ public class MemberController {
 	@PostMapping("/register")
 	public ResponseEntity<?> register(@RequestBody MemberDTO mdto) {
 		try {
-			int result = memberService.memberJoin(mdto);
+			JoinResponse joinResponse = memberService.memberJoin(mdto);
 
-			if (result == -1) {
+			List<Map<String, Object>> duplicateMessages = new ArrayList<>();
+
+			if (!joinResponse.isEmailAvailable()) {
+				duplicateMessages.add(createBadRequestResponse("이미 존재하는 이메일입니다.", "email"));
+			}
+			if (!joinResponse.isUserIdAvailable()) {
+				duplicateMessages.add(createBadRequestResponse("이미 존재하는 아이디입니다.", "id"));
+			}
+			if (!joinResponse.isPhoneAvailable()) {
+				duplicateMessages.add(createBadRequestResponse("이미 존재하는 전화번호입니다.", "phone"));
+			}
+
+			// duplicateMessages 리스트가 비어있지 않으면 createBadRequestResponse를 통해 생성한 중복문제를 한꺼번에 전달
+			if (!duplicateMessages.isEmpty()) {
 				return ResponseEntity
 						.status(HttpStatus.BAD_REQUEST)
-						.body(Collections.singletonMap("message", "이미 존재하는 이메일입니다."));
-			} else if (result == -2) {
-				return ResponseEntity
-						.status(HttpStatus.BAD_REQUEST)
-						.body(Collections.singletonMap("message", "이미 존재하는 아이디입니다."));
-			} else if (result == -3) {
-				return ResponseEntity
-						.status(HttpStatus.BAD_REQUEST)
-						.body(Collections.singletonMap("message", "이미 존재하는 전화번호입니다."));
-			} else if (result > 0) {
-				return ResponseEntity
-						.status(HttpStatus.CREATED)
-						.body(Collections.singletonMap("message", mdto.getName() + "님, 회원가입을 축하합니다."));
+						.body(Collections.singletonMap("message", duplicateMessages));
+
 			} else {
 				return ResponseEntity
-						.status(HttpStatus.INTERNAL_SERVER_ERROR)
-						.body(Collections.singletonMap("message", "회원가입 과정에서 오류가 발생했습니다."));
+						.status(HttpStatus.CREATED)
+						.body(Collections.singletonMap("message", mdto.getName() + "님, 환영합니다! 회원가입이 완료되었습니다."));
 			}
 		} catch (Exception e) {
 			// 모든 예외를 여기서 잡아냄
@@ -94,6 +93,14 @@ public class MemberController {
 					.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(Collections.singletonMap("message", "서버 오류로 인한 회원가입 실패"));
 		}
+	}
+
+	// 회원가입 시 중복된 요소들을 모두 생성
+	private Map<String, Object> createBadRequestResponse(String message, String statusReason) {
+		Map<String, Object> responseData = new HashMap<>();
+		responseData.put("message", message);
+		responseData.put("statusReason", statusReason);
+		return responseData;
 	}
 
 	@GetMapping("/info") // 회원정보 불러오기
