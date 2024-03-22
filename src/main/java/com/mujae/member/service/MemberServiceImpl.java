@@ -1,5 +1,6 @@
 package com.mujae.member.service;
 
+import com.mujae.member.controller.JoinResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,23 +17,23 @@ public class MemberServiceImpl implements MemberService {
 	MemberMapper memberMapper;
 
 	@Override
-	public int memberJoin(MemberDTO mdto) throws Exception {
-		// 이메일 중복 검사
-		if (!isEmailAvailable(mdto.getEmail())) {
-			return -1; // 이메일 중복
-		}
-		// 아이디 중복 검사
-		if (!isUserIdAvailable(mdto.getId())) {
-			return -2; // 아이디 중복
-		}
-		// 전화번호 중복 검사
-		if (!isPhoneAvailable(mdto.getPhone())) {
-			return -3; // 전화번호 중복
-		}
+	public JoinResponse memberJoin(MemberDTO mdto) throws Exception {
+		JoinResponse response = new JoinResponse();
+
+		// 이메일, 아이디, 전화번호 중복 검사
+		response.setEmailAvailable(isEmailAvailable(mdto.getEmail()));
+		response.setUserIdAvailable(isUserIdAvailable(mdto.getId()));
+		response.setPhoneAvailable(isPhoneAvailable(mdto.getPhone()));
 
 		// 중복이 없으면 회원가입 처리
-		int result = memberMapper.memberJoin(mdto);
-		return result > 0 ? result : 0; // 성공적으로 추가된 경우, 영향 받은 행의 수 반환
+		if (response.isEmailAvailable() && response.isUserIdAvailable() && response.isPhoneAvailable()) {
+			int result = memberMapper.memberJoin(mdto);
+			if (result <= 0) {
+				throw new Exception("회원가입에 실패하였습니다.");
+			}
+		}
+
+		return response; // 성공적으로 추가된 경우, 영향 받은 행의 수 반환
 	}
 
 	private boolean isEmailAvailable(String email) {

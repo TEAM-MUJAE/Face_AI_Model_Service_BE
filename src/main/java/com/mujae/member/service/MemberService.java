@@ -1,11 +1,12 @@
 package com.mujae.member.service;
 
+import com.mujae.member.controller.JoinResponse;
 import com.mujae.member.dto.MemberDTO;
 
 
 public interface MemberService {
 
-	int memberJoin(MemberDTO mdto) throws Exception; //회원가입
+	JoinResponse memberJoin(MemberDTO mdto) throws Exception; //회원가입
 
 	MemberDTO getMember(MemberDTO mdto); //회원정보 가져오기
 
